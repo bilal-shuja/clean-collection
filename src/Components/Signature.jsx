@@ -7,23 +7,26 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 
 const Signature = () => {
   const fileInputRef = useRef(null);
+  const inputRightRef = useRef(null);
+
+  const [file, setFile] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [openPDF, setOpenPDF] = useState("");
-  const [file, setFile] = useState(null);
 
-  const sigCanvas = useRef(null);
+  const sigCanvasRight = useRef(null);
   const singCanvasLeft = useRef(null);
 
   const [rightInputValue, setRightInputValue] = useState("");
-  const inputRightRef = useRef(null);
   const [pdfContent, setPdfContent] = useState(null);
 
   const [showPDFModifiedBtn, setShowPDFModifiedBtn] = useState(false);
+  const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
   const debouncedUpdatePdfWithText = customDebounce(updatePdfWithText, 500);
 
-
-
+  const displayRightSideSignaturePad = () => {
+    setShowRightSideSignaturePad(true);
+  };
   async function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
   }
@@ -43,7 +46,6 @@ const Signature = () => {
     }
   };
 
-
   // Create a custom debounce function(adding dely in input)
   function customDebounce(fn, delay) {
     let timeoutId;
@@ -56,31 +58,26 @@ const Signature = () => {
   }
 
   async function addSignatures() {
-    const signatureDataURLRight = sigCanvas.current.toDataURL();
-    const signatureDataURLLeft = singCanvasLeft.current.toDataURL();
 
-    const existingPdfBytes = await fetch(file?.url).then((res) =>
-      res.arrayBuffer()
-    );
-
+    const existingPdfBytes = await fetch(file?.url).then((res) => res.arrayBuffer());
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
     const page = pdfDoc.getPage(pageNumber - 1);
-
-    const pngImageRight = await pdfDoc.embedPng(signatureDataURLRight);
-    const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
-
     const { width, height } = page.getSize();
     const imageSize = { width: 250, height: 60 };
-
-    // Add the right signature
-    page.drawImage(pngImageRight, {
-      x: width - imageSize.width - -20,
-      y: height - imageSize.height - 620,
-      width: imageSize.width,
-      height: imageSize.height,
-      opacity: 1,
-    });
-
+  
+    const signatureDataURLRight = sigCanvasRight.current.toDataURL();
+    let signatureDataURLLeft = null;
+  
+    if (singCanvasLeft.current) {
+      signatureDataURLLeft = singCanvasLeft.current.toDataURL();
+    } else {
+      console.error("Left-side signature canvas is not available.");
+      return; // Exit the function if left-side canvas is not available.
+    }
+  
+    const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
+    const pngImageRight = await pdfDoc.embedPng(signatureDataURLRight);
+  
     // Add the left signature
     page.drawImage(pngImageLeft, {
       x: width - imageSize.width - 270,
@@ -89,13 +86,22 @@ const Signature = () => {
       height: imageSize.height,
       opacity: 1,
     });
-
+  
+    // Add the right signature if the right-side signature pad is shown
+      page.drawImage(pngImageRight, {
+        x: width - imageSize.width - -20,
+        y: height - imageSize.height - 620,
+        width: imageSize.width,
+        height: imageSize.height,
+        opacity: 1,
+      });
+  
     const modifiedPdfBytes = await pdfDoc.save();
     const modifiedPdfBlob = new Blob([modifiedPdfBytes], {
       type: "application/pdf",
     });
     const modifiedPdfUrl = URL.createObjectURL(modifiedPdfBlob);
-    // window.open(modifiedPdfUrl, "_blank");
+  
     setOpenPDF(modifiedPdfUrl);
     setShowPDFModifiedBtn(true);
   }
@@ -181,13 +187,11 @@ const Signature = () => {
   };
 
   function clearSignature() {
-    sigCanvas.current.clear();
+    sigCanvasRight.current.clear();
   }
   function clearSignatureLeft() {
     singCanvasLeft.current.clear();
   }
-
-
 
   return (
     <>
@@ -242,15 +246,14 @@ const Signature = () => {
                   Open Modified PDF
                 </button>
               </div>
-
-          
-
-
             </div>
-     
             <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
-            <Page pageNumber={pageNumber} renderAnnotationLayer={false} renderTextLayer={false} />
-          </Document>
+              <Page
+                pageNumber={pageNumber}
+                renderAnnotationLayer={false}
+                renderTextLayer={false}
+              />
+            </Document>
             <p>
               Page {pageNumber} of {numPages}
             </p>
@@ -269,37 +272,60 @@ const Signature = () => {
             >
               Next Page
             </button>
-            <div>
-              <label htmlFor="">Left Sign</label>
-              <SignatureCanvas
-                ref={singCanvasLeft}
+            <div className="d-flex justify-content-center">
+              
+                <div style={{ display: showRightSideSignaturePad ? 'none' : 'flex' }}>
+                  <SignatureCanvas
+                    ref={singCanvasLeft}
+                    penColor="black"
+                    canvasProps={{
+                      width: 350,
+                      height: 100,
+                      className: "signature-canvas border border-dark fw-bolder m-3",
+                    }}
+                  />
+                  <label htmlFor="" className="align-self-center">
+                    Pickup Signature
+                  </label>
+                </div>
+            {
+               showRightSideSignaturePad && (
+                <>
+                <SignatureCanvas
+                ref={sigCanvasRight}
                 penColor="black"
                 canvasProps={{
-                  width: 300,
+                  width: 350,
                   height: 100,
                   className:
                     "signature-canvas border border-dark fw-bolder m-3",
                 }}
               />
-
-              <SignatureCanvas
-                ref={sigCanvas}
-                penColor="black"
-                canvasProps={{
-                  width: 300,
-                  height: 100,
-                  className:
-                    "signature-canvas border border-dark fw-bolder m-3",
-                }}
-              />
-              <label htmlFor="">Right Sign</label>
+              <label htmlFor="" className="align-self-center">
+                Staff Signature
+              </label>
+              </>
+               )  
+     
+            }  
             </div>
-            <button
-              className="btn btn-outline-warning  btn-sm"
-              onClick={addSignatures}
-            >
-              Add Signatures
-            </button>
+
+            {showRightSideSignaturePad === true ? null : (
+              <button
+                className="btn btn-outline-primary"
+                onClick={displayRightSideSignaturePad}
+              >
+                Next Signature
+              </button>
+            )}
+            {showRightSideSignaturePad === true ? (
+              <button
+                className="btn btn-outline-warning  btn-sm"
+                onClick={addSignatures}
+              >
+                Add Signatures
+              </button>
+            ) : null}
             &nbsp;&nbsp;
             {showPDFModifiedBtn === false ? null : (
               <button
@@ -311,19 +337,23 @@ const Signature = () => {
               </button>
             )}
             &nbsp;&nbsp;
-            <button
-              className="btn btn-outline-danger btn-sm"
-              onClick={clearSignatureLeft}
-            >
-              Clear Left Sign
-            </button>
+            {showRightSideSignaturePad === true ? null : (
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={clearSignatureLeft}
+              >
+                Clear Pickup Signature
+              </button>
+            )}
             &nbsp;&nbsp;
-            <button
-              className="btn btn-outline-danger btn-sm"
-              onClick={clearSignature}
-            >
-              Clear Right Sign
-            </button>
+            {showRightSideSignaturePad === true ? (
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={clearSignature}
+              >
+                Clear Staff Signature
+              </button>
+            ) : null}
           </div>
         )}
       </div>
