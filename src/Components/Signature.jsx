@@ -34,6 +34,9 @@ const Signature = () => {
     fileInputRef.current.click();
   };
 
+
+  // wokring with the new GUI
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
