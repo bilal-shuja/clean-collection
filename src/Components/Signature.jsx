@@ -35,7 +35,8 @@ const Signature = () => {
   };
 
 
-  // wokring with the new GUI
+  // working with the new GUI
+
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -49,7 +50,7 @@ const Signature = () => {
     }
   };
 
-  // Create a custom debounce function(adding dely in input)
+  // Create a custom debounce function(adding delay in input)
   function customDebounce(fn, delay) {
     let timeoutId;
     return function (...args) {
@@ -59,6 +60,9 @@ const Signature = () => {
       }, delay);
     };
   }
+
+
+
 
   async function addSignatures() {
 
