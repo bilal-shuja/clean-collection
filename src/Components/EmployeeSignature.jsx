@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import React, { useState, useRef } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
 import { useLocation } from 'react-router-dom';
+import SignatureModal from "./SignatureModal";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -10,7 +11,7 @@ const EmployeeSignature = () => {
 
     const location = useLocation();
     const { pdfFile } = location.state;
-  
+
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
 
@@ -24,6 +25,7 @@ const EmployeeSignature = () => {
 
     const [rightInputValue, setRightInputValue] = useState("");
     const [pdfContent, setPdfContent] = useState(null);
+    const [openModal, setOpenModal] = useState(false)
 
     const [showPDFModifiedBtn, setShowPDFModifiedBtn] = useState(false);
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
@@ -265,90 +267,28 @@ const EmployeeSignature = () => {
                         >
                             Next Page
                         </button>
-                        <div className="d-flex justify-content-center">
 
-                            <div style={{ display: showRightSideSignaturePad ? 'none' : 'flex' }}>
-                                <SignatureCanvas
-                                    ref={singCanvasLeft}
-                                    penColor="black"
-                                    canvasProps={{
-                                        width: 350,
-                                        height: 100,
-                                        className: "signature-canvas border border-dark fw-bolder m-3",
-                                    }}
-                                />
-                                <label htmlFor="" className="align-self-center">
-                                    Pickup Signature
-                                </label>
-                            </div>
-                            {
-                                showRightSideSignaturePad && (
-                                    <>
-                                        <SignatureCanvas
-                                            ref={sigCanvasRight}
-                                            penColor="black"
-                                            canvasProps={{
-                                                width: 350,
-                                                height: 100,
-                                                className:
-                                                    "signature-canvas border border-dark fw-bolder m-3",
-                                            }}
-                                        />
-                                        <label htmlFor="" className="align-self-center">
-                                            Staff Signature
-                                        </label>
-                                    </>
-                                )
+<button onClick={() => setOpenModal(true)}>OPenModal</button>
 
-                            }
-                        </div>
-
-                        {showRightSideSignaturePad === true ? null : (
-                            <button
-                                className="btn btn-outline-primary"
-                                onClick={displayRightSideSignaturePad}
-                            >
-                                Next Signature
-                            </button>
-                        )}
-                        {showRightSideSignaturePad === true ? (
-                            <button
-                                className="btn btn-outline-warning  btn-sm"
-                                onClick={addSignatures}
-                            >
-                                Add Signatures
-                            </button>
-                        ) : null}
-                        &nbsp;&nbsp;
-                        {showPDFModifiedBtn === false ? null : (
-                            <button
-                                className="btn btn-outline-info  btn-sm"
-                                onClick={openModifiedPdfInNewTab}
-                                style={{ marginRight: "2em" }}
-                            >
-                                Open Modified Pdf
-                            </button>
-                        )}
-                        &nbsp;&nbsp;
-                        {showRightSideSignaturePad === true ? null : (
-                            <button
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={clearSignatureLeft}
-                            >
-                                Clear Pickup Signature
-                            </button>
-                        )}
-                        &nbsp;&nbsp;
-                        {showRightSideSignaturePad === true ? (
-                            <button
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={clearSignature}
-                            >
-                                Clear Staff Signature
-                            </button>
-                        ) : null}
+                       
                     </div>
                 )}
+
+                <SignatureModal 
+                
+                clearSignature={clearSignature}
+                showRightSideSignaturePad={showRightSideSignaturePad}
+                clearSignatureLeft={clearSignatureLeft}
+                openModifiedPdfInNewTab={openModifiedPdfInNewTab}
+                addSignatures={addSignatures}
+                displayRightSideSignaturePad={displayRightSideSignaturePad}
+                showPDFModifiedBtn={showPDFModifiedBtn}
+                singCanvasLeft={singCanvasLeft}
+                sigCanvasRight={sigCanvasRight}
+
+                openModal={openModal}
+                setOpenModal={setOpenModal}
+                />
             </div>
         </>
     );
