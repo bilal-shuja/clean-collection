@@ -2,15 +2,14 @@ import SignatureCanvas from "react-signature-canvas";
 import { Document, Page, pdfjs } from "react-pdf";
 import React, { useState, useRef } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
-import { useLocation } from 'react-router-dom';
 import SignatureModal from "./SignatureModal";
+import { useEffect } from "react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const EmployeeSignature = () => {
 
-    const location = useLocation();
-    const { pdfFile } = location.state;
+    const [pdfFile, setPdfFile] = useState(null)
 
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
@@ -31,6 +30,10 @@ const EmployeeSignature = () => {
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
     const debouncedUpdatePdfWithText = customDebounce(updatePdfWithText, 500);
 
+    useEffect(() => {
+        getPdf();
+    }, [])
+
     const displayRightSideSignaturePad = () => {
         setShowRightSideSignaturePad(true);
     };
@@ -41,6 +44,23 @@ const EmployeeSignature = () => {
         fileInputRef.current.click();
     };
 
+    const getPdf = () => {
+        var requestOptions = {
+            method: 'POST',
+            redirect: 'follow'
+        };
+
+        fetch("https://pdf.tradingtube.net/api/getFile?userIdentifier=652e9d33106bb", requestOptions)
+            .then(response => response.blob())
+            .then(blob => {
+                // Create a Blob URL from the received blob
+                const pdfBlobUrl = URL.createObjectURL(blob);
+                setPdfFile(pdfBlobUrl);
+            })
+            .catch(error => {
+                console.log('error', error)
+            });
+    }
 
     // working with the new GUI
 
@@ -206,6 +226,7 @@ const EmployeeSignature = () => {
     return (
         <>
             <div className="container text-center p-4">
+
                 <p className="text-bold mt-5">
                     Easily add your docs and mark your signature
                 </p>
@@ -268,26 +289,25 @@ const EmployeeSignature = () => {
                             Next Page
                         </button>
 
-<button onClick={() => setOpenModal(true)}>OPenModal</button>
-
-                       
+                        <br />
+                        <button className="btn btn-lg btn-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
                     </div>
                 )}
 
-                <SignatureModal 
-                
-                clearSignature={clearSignature}
-                showRightSideSignaturePad={showRightSideSignaturePad}
-                clearSignatureLeft={clearSignatureLeft}
-                openModifiedPdfInNewTab={openModifiedPdfInNewTab}
-                addSignatures={addSignatures}
-                displayRightSideSignaturePad={displayRightSideSignaturePad}
-                showPDFModifiedBtn={showPDFModifiedBtn}
-                singCanvasLeft={singCanvasLeft}
-                sigCanvasRight={sigCanvasRight}
+                <SignatureModal
 
-                openModal={openModal}
-                setOpenModal={setOpenModal}
+                    clearSignature={clearSignature}
+                    showRightSideSignaturePad={showRightSideSignaturePad}
+                    clearSignatureLeft={clearSignatureLeft}
+                    openModifiedPdfInNewTab={openModifiedPdfInNewTab}
+                    addSignatures={addSignatures}
+                    displayRightSideSignaturePad={displayRightSideSignaturePad}
+                    showPDFModifiedBtn={showPDFModifiedBtn}
+                    singCanvasLeft={singCanvasLeft}
+                    sigCanvasRight={sigCanvasRight}
+
+                    openModal={openModal}
+                    setOpenModal={setOpenModal}
                 />
             </div>
         </>

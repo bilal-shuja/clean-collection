@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom'
 import SignatureCanvas from "react-signature-canvas";
 import { Document, Page, pdfjs } from "react-pdf";
 import { PDFDocument, rgb } from "pdf-lib";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
+toast.configure();
 const AdminSignature = () => {
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
@@ -13,7 +16,9 @@ const AdminSignature = () => {
     const [file, setFile] = useState(null);
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
-    const [openPDF, setOpenPDF] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const [identifier, setIdentifier] = useState("")
 
     const sigCanvasRight = useRef(null);
     const singCanvasLeft = useRef(null);
@@ -25,13 +30,38 @@ const AdminSignature = () => {
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
     const debouncedUpdatePdfWithText = customDebounce(updatePdfWithText, 500);
 
-    const SharingFile = () => {
+    const uploadFile = () => {
+        setLoading(true)
+        var formdata = new FormData();
+        // formdata.append("pdf", fileInput.files[0], "/C:/Users/HP/Downloads/626423.png");
+        formdata.append("pdf", file);
 
+        var requestOptions = {
+            method: 'POST',
+            body: formdata,
+            redirect: 'follow'
+        };
+
+        fetch("https://pdf.tradingtube.net/api/post_file", requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                setLoading(false)
+                if (result.status === 401) {
+                    toast("Please enter a valid pdf file");
+                }
+                else if (result.status === "200") {
+                    console.log(result)
+                    setIdentifier(result.user_identifier)
+                    toast("Uploaded Successfully");
+                }
+            })
+            .catch(error => {
+                setLoading(false)
+                console.log('error', error)
+                toast("Something went wrong");
+            });
     }
 
-    const displayRightSideSignaturePad = () => {
-        setShowRightSideSignaturePad(true);
-    };
     async function onDocumentLoadSuccess({ numPages }) {
         setNumPages(numPages);
     }
@@ -39,11 +69,13 @@ const AdminSignature = () => {
         fileInputRef.current.click();
     };
 
-    const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
+
+    const handleFileChange = () => {
+
+        const selectedFile = fileInputRef.current.files[0];
         if (selectedFile && selectedFile.type === "application/pdf") {
             const fileUrl = URL.createObjectURL(selectedFile);
-            setFile({ file: selectedFile, url: fileUrl });
+            setFile(selectedFile);
             setPageNumber(1);
             loadPdfContent(fileUrl);
         } else {
@@ -62,54 +94,6 @@ const AdminSignature = () => {
         };
     }
 
-    async function addSignatures() {
-
-        const existingPdfBytes = await fetch(file?.url).then((res) => res.arrayBuffer());
-        const pdfDoc = await PDFDocument.load(existingPdfBytes);
-        const page = pdfDoc.getPage(pageNumber - 1);
-        const { width, height } = page.getSize();
-        const imageSize = { width: 250, height: 60 };
-
-        const signatureDataURLRight = sigCanvasRight.current.toDataURL();
-        let signatureDataURLLeft = null;
-
-        if (singCanvasLeft.current) {
-            signatureDataURLLeft = singCanvasLeft.current.toDataURL();
-        } else {
-            console.error("Left-side signature canvas is not available.");
-            return; // Exit the function if left-side canvas is not available.
-        }
-
-        const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
-        const pngImageRight = await pdfDoc.embedPng(signatureDataURLRight);
-
-        // Add the left signature
-        page.drawImage(pngImageLeft, {
-            x: width - imageSize.width - 270,
-            y: height - imageSize.height - 620,
-            width: imageSize.width,
-            height: imageSize.height,
-            opacity: 1,
-        });
-
-        // Add the right signature if the right-side signature pad is shown
-        page.drawImage(pngImageRight, {
-            x: width - imageSize.width - -20,
-            y: height - imageSize.height - 620,
-            width: imageSize.width,
-            height: imageSize.height,
-            opacity: 1,
-        });
-
-        const modifiedPdfBytes = await pdfDoc.save();
-        const modifiedPdfBlob = new Blob([modifiedPdfBytes], {
-            type: "application/pdf",
-        });
-        const modifiedPdfUrl = URL.createObjectURL(modifiedPdfBlob);
-
-        setOpenPDF(modifiedPdfUrl);
-        setShowPDFModifiedBtn(true);
-    }
 
     async function loadPdfContent(pdfUrl) {
         const existingPdfBytes = await fetch(pdfUrl).then((res) =>
@@ -179,11 +163,6 @@ const AdminSignature = () => {
         setFile({ ...file, url: updatedPdfUrl });
     }
 
-    const openModifiedPdfInNewTab = () => {
-        if (file && file.url) {
-            window.open(openPDF, "_blank");
-        }
-    };
 
     const openModifiedPdfInNewTextTab = () => {
         if (file && file.url) {
@@ -191,12 +170,6 @@ const AdminSignature = () => {
         }
     };
 
-    function clearSignature() {
-        sigCanvasRight.current.clear();
-    }
-    function clearSignatureLeft() {
-        singCanvasLeft.current.clear();
-    }
 
     return (
         <>
@@ -267,21 +240,40 @@ const AdminSignature = () => {
                 )}
 
                 <div className="d-grid gap-2 col-lg-6 mx-auto mt-5">
-                    {file ? (
-                        <Link to='/EmployeeSignature' state={{pdfFile: file}}>
-                            <button
-                                type="file"
-                                className="btn btn-outline-light text-white p-4"
-                                style={{
-                                    fill: "#e74c3c",
-                                    backgroundColor: "#e74c3c",
-                                    borderRadius: "1em",
-                                }}
-                            >
-                                Share to Employee
-                            </button>
-                        </Link>
-                    ) : null}
+                    {
+                        loading === true ? (
+                            <div className="spinner-border" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+
+                        ) : (
+                            <div>
+                                {file ? (
+
+                                    <button
+                                        onClick={uploadFile}
+                                        type="file"
+                                        className="btn btn-outline-light text-white p-4"
+                                        style={{
+                                            fill: "#e74c3c",
+                                            backgroundColor: "#e74c3c",
+                                            borderRadius: "1em",
+                                        }}
+                                    >
+                                        Share to Employee
+                                    </button>
+
+                                ) : null}
+                            </div>
+                        )
+
+                    }
+
+
+
+
+
+
                 </div>
             </div>
         </>
