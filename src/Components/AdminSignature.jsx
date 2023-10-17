@@ -177,7 +177,28 @@ const AdminSignature = () => {
                 <p className="text-bold mt-5">
                     Easily add your docs and mark your signature
                 </p>
+                <div className="row  mt-4 mb-4">
+                    <div className="col-lg-3">
+                        <input
+                            ref={inputRightRef}
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Enter text..."
+                            aria-label="Enter text..."
+                            value={rightInputValue}
+                            onChange={handleInputChange}
+                        />
+                    </div>
 
+                    <div className="col-lg-3">
+                        <button
+                            className="btn btn-outline-info  btn-sm"
+                            onClick={openModifiedPdfInNewTextTab}
+                        >
+                            Open Modified PDF
+                        </button>
+                    </div>
+                </div>
                 <div className="d-grid gap-2 col-lg-6 mx-auto mt-5">
                     <button
                         type="file"
@@ -203,28 +224,7 @@ const AdminSignature = () => {
 
                 {file && (
                     <div className="mt-5">
-                        <div className="row  mt-4 mb-4">
-                            <div className="col-lg-3">
-                                <input
-                                    ref={inputRightRef}
-                                    type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Enter text..."
-                                    aria-label="Enter text..."
-                                    value={rightInputValue}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
 
-                            <div className="col-lg-3">
-                                <button
-                                    className="btn btn-outline-info  btn-sm"
-                                    onClick={openModifiedPdfInNewTextTab}
-                                >
-                                    Open Modified PDF
-                                </button>
-                            </div>
-                        </div>
                         <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
                             <Page
                                 pageNumber={pageNumber}

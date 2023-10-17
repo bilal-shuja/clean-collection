@@ -4,17 +4,16 @@ import React, { useState, useRef } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
 import SignatureModal from "./SignatureModal";
 import { useEffect } from "react";
+import cleanpdf from '../PDFiles/sign_sample.pdf'
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const EmployeeSignature = () => {
 
-    const [pdfFile, setPdfFile] = useState(null)
-
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
 
-    const [file, setFile] = useState(pdfFile);
+    const [file, setFile] = useState(null);
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [openPDF, setOpenPDF] = useState("");
@@ -30,6 +29,9 @@ const EmployeeSignature = () => {
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
     const debouncedUpdatePdfWithText = customDebounce(updatePdfWithText, 500);
 
+
+    console.log(file)
+
     useEffect(() => {
         getPdf();
     }, [])
@@ -40,29 +42,24 @@ const EmployeeSignature = () => {
     async function onDocumentLoadSuccess({ numPages }) {
         setNumPages(numPages);
     }
-    const handleButtonClick = () => {
-        fileInputRef.current.click();
-    };
 
     const getPdf = () => {
         var requestOptions = {
             method: 'POST',
             redirect: 'follow'
         };
-
-        fetch("https://pdf.tradingtube.net/api/getFile?userIdentifier=652e9d33106bb", requestOptions)
+        // 652eadc168845  652eab5ec3a26 652eaeb79d83f
+        fetch("https://pdf.tradingtube.net/api/getFile?userIdentifier=652eaeb79d83f", requestOptions)
             .then(response => response.blob())
             .then(blob => {
-                // Create a Blob URL from the received blob
                 const pdfBlobUrl = URL.createObjectURL(blob);
-                setPdfFile(pdfBlobUrl);
+                setFile(pdfBlobUrl);
+                console.log(blob)
             })
             .catch(error => {
                 console.log('error', error)
             });
     }
-
-    // working with the new GUI
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -230,15 +227,7 @@ const EmployeeSignature = () => {
                 <p className="text-bold mt-5">
                     Easily add your docs and mark your signature
                 </p>
-
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ display: "none" }}
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                />
-
+                
                 {file && (
                     <div className="mt-5">
                         <div className="row  mt-4 mb-4">
