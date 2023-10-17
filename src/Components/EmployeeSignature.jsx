@@ -227,7 +227,7 @@ const EmployeeSignature = () => {
                 <p className="text-bold mt-5">
                     Easily add your docs and mark your signature
                 </p>
-                
+
                 {file && (
                     <div className="mt-5">
                         <div className="row  mt-4 mb-4">
@@ -242,6 +242,8 @@ const EmployeeSignature = () => {
                                     onChange={handleInputChange}
                                 />
                             </div>
+
+                            
 
                             <div className="col-lg-3">
                                 <button
