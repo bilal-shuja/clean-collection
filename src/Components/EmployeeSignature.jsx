@@ -17,7 +17,7 @@ const EmployeeSignature = () => {
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [openPDF, setOpenPDF] = useState("");
-
+    const [loading, setLoading] = useState(false)
     const sigCanvasRight = useRef(null);
     const singCanvasLeft = useRef(null);
 
@@ -28,9 +28,6 @@ const EmployeeSignature = () => {
     const [showPDFModifiedBtn, setShowPDFModifiedBtn] = useState(false);
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
     const debouncedUpdatePdfWithText = customDebounce(updatePdfWithText, 500);
-
-
-    console.log(file)
 
     useEffect(() => {
         getPdf();
@@ -44,20 +41,30 @@ const EmployeeSignature = () => {
     }
 
     const getPdf = () => {
+
+        setLoading(true)
         var requestOptions = {
             method: 'POST',
             redirect: 'follow'
         };
-        // 652eadc168845  652eab5ec3a26 652eaeb79d83f
         fetch("https://pdf.tradingtube.net/api/getFile?userIdentifier=652eaeb79d83f", requestOptions)
+
             .then(response => response.blob())
-            .then(blob => {
-                const pdfBlobUrl = URL.createObjectURL(blob);
-                setFile(pdfBlobUrl);
-                console.log(blob)
+            .then(async blob => {
+                setLoading(false)
+                // Convert the received image data to a PDF file
+                const imgBlob = new Blob([blob], { type: 'application/pdf' });
+                const imgBlobUrl = URL.createObjectURL(imgBlob);
+
+                // Set the PDF as the file
+                setFile({ file: imgBlob, url: imgBlobUrl });
+
+                // Load the PDF content
+                await loadPdfContent(imgBlobUrl);
             })
             .catch(error => {
                 console.log('error', error)
+                setLoading(false)
             });
     }
 
@@ -228,62 +235,74 @@ const EmployeeSignature = () => {
                     Easily add your docs and mark your signature
                 </p>
 
-                {file && (
-                    <div className="mt-5">
-                        <div className="row  mt-4 mb-4">
-                            <div className="col-lg-3">
-                                <input
-                                    ref={inputRightRef}
-                                    type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Enter text..."
-                                    aria-label="Enter text..."
-                                    value={rightInputValue}
-                                    onChange={handleInputChange}
-                                />
-                            </div>
 
-                            
-
-                            <div className="col-lg-3">
-                                <button
-                                    className="btn btn-outline-info  btn-sm"
-                                    onClick={openModifiedPdfInNewTextTab}
-                                >
-                                    Open Modified PDF
-                                </button>
+                {
+                    loading === true ? (
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
-                        <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
-                            <Page
-                                pageNumber={pageNumber}
-                                renderAnnotationLayer={false}
-                                renderTextLayer={false}
-                            />
-                        </Document>
-                        <p>
-                            Page {pageNumber} of {numPages}
-                        </p>
-                        <button
-                            className="btn btn-outline-danger"
-                            onClick={() => setPageNumber(pageNumber - 1)}
-                            disabled={pageNumber <= 1}
-                        >
-                            Previous Page
-                        </button>
-                        &nbsp;&nbsp;
-                        <button
-                            className="btn btn-outline-danger"
-                            onClick={() => setPageNumber(pageNumber + 1)}
-                            disabled={pageNumber >= numPages}
-                        >
-                            Next Page
-                        </button>
+                    ) : (
+                        <div>
+                            {file && (
+                                <div className="mt-5">
+                                    <div className="row  mt-4 mb-4">
+                                        <div className="col-lg-3">
+                                            <input
+                                                ref={inputRightRef}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Enter text..."
+                                                aria-label="Enter text..."
+                                                value={rightInputValue}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
 
-                        <br />
-                        <button className="btn btn-lg btn-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
-                    </div>
-                )}
+
+                                        <div className="col-lg-3">
+                                            <button
+                                                className="btn btn-outline-info  btn-sm"
+                                                onClick={openModifiedPdfInNewTextTab}
+                                            >
+                                                Open Modified PDF
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
+                                        <Page
+                                            pageNumber={pageNumber}
+                                            renderAnnotationLayer={false}
+                                            renderTextLayer={false}
+                                        />
+                                    </Document>
+                                    <p>
+                                        Page {pageNumber} of {numPages}
+                                    </p>
+                                    <button
+                                        className="btn btn-outline-danger"
+                                        onClick={() => setPageNumber(pageNumber - 1)}
+                                        disabled={pageNumber <= 1}
+                                    >
+                                        Previous Page
+                                    </button>
+                                    &nbsp;&nbsp;
+                                    <button
+                                        className="btn btn-outline-danger"
+                                        onClick={() => setPageNumber(pageNumber + 1)}
+                                        disabled={pageNumber >= numPages}
+                                    >
+                                        Next Page
+                                    </button>
+
+                                    <br />
+                                    <button className="btn btn-lg btn-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
 
                 <SignatureModal
 
@@ -296,9 +315,9 @@ const EmployeeSignature = () => {
                     showPDFModifiedBtn={showPDFModifiedBtn}
                     singCanvasLeft={singCanvasLeft}
                     sigCanvasRight={sigCanvasRight}
-
                     openModal={openModal}
                     setOpenModal={setOpenModal}
+                    
                 />
             </div>
         </>
