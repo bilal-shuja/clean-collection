@@ -23,6 +23,7 @@ const SignatureModal = ({ clearSignature, openModal, showRightSideSignaturePad, 
                             Pickup Signature
                         </label>
                     </div>
+                    
                     {
                         showRightSideSignaturePad && (
                             <>

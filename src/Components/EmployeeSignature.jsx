@@ -24,6 +24,8 @@ const EmployeeSignature = () => {
     const [rightInputValue, setRightInputValue] = useState("");
     const [pdfContent, setPdfContent] = useState(null);
     const [openModal, setOpenModal] = useState(false)
+    const [openPickupSignature, setOpenPickupSignatureModal] = useState(false);
+    const [openStaffSignatureModal, setOpenStaffSignatureModal] = useState(false);
 
     const [showPDFModifiedBtn, setShowPDFModifiedBtn] = useState(false);
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
@@ -36,6 +38,7 @@ const EmployeeSignature = () => {
     const displayRightSideSignaturePad = () => {
         setShowRightSideSignaturePad(true);
     };
+
     async function onDocumentLoadSuccess({ numPages }) {
         setNumPages(numPages);
     }
@@ -106,7 +109,7 @@ const EmployeeSignature = () => {
             signatureDataURLLeft = singCanvasLeft.current.toDataURL();
         } else {
             console.error("Left-side signature canvas is not available.");
-            return; // Exit the function if left-side canvas is not available.
+            return; // !Exit the function if left-side canvas is not available.
         }
 
         const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
@@ -235,7 +238,6 @@ const EmployeeSignature = () => {
                     Easily add your docs and mark your signature
                 </p>
 
-
                 {
                     loading === true ? (
                         <div class="d-flex justify-content-center">
@@ -259,7 +261,6 @@ const EmployeeSignature = () => {
                                                 onChange={handleInputChange}
                                             />
                                         </div>
-
 
                                         <div className="col-lg-3">
                                             <button
@@ -297,7 +298,11 @@ const EmployeeSignature = () => {
                                     </button>
 
                                     <br />
-                                    <button className="btn btn-lg btn-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
+
+
+                                    <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenStaffSignatureModal(true)}>Staff Signature</button>
+                                    <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenPickupSignatureModal(true)}>Pickup Signature</button>
+                                    <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
                                 </div>
                             )}
                         </div>
@@ -317,7 +322,7 @@ const EmployeeSignature = () => {
                     sigCanvasRight={sigCanvasRight}
                     openModal={openModal}
                     setOpenModal={setOpenModal}
-                    
+
                 />
             </div>
         </>
