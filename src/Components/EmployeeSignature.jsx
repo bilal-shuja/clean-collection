@@ -2,14 +2,20 @@ import SignatureCanvas from "react-signature-canvas";
 import { Document, Page, pdfjs } from "react-pdf";
 import React, { useState, useRef } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
-import SignatureModal from "./SignatureModal";
+import SignatureModal from "../Components/Modals/SignatureModal";
 import { useEffect } from "react";
-import cleanpdf from '../PDFiles/sign_sample.pdf'
+import { useParams } from 'react-router-dom';
+import StaffSignatureModal from './Modals/StaffSignatureModal'
+
+
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const EmployeeSignature = () => {
+    
 
+    
+    const { identifier } = useParams();
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
 
@@ -24,8 +30,15 @@ const EmployeeSignature = () => {
     const [rightInputValue, setRightInputValue] = useState("");
     const [pdfContent, setPdfContent] = useState(null);
     const [openModal, setOpenModal] = useState(false)
+
     const [openPickupSignature, setOpenPickupSignatureModal] = useState(false);
-    const [openStaffSignatureModal, setOpenStaffSignatureModal] = useState(false);
+
+    const [openStaffModal, setOpenStaffModal] = useState(false);
+    const staffSignatureRef = useRef(null);
+  
+    const clearStaffSignature = () => {
+      staffSignatureRef.clear();
+    };
 
     const [showPDFModifiedBtn, setShowPDFModifiedBtn] = useState(false);
     const [showRightSideSignaturePad, setShowRightSideSignaturePad] = useState(false);
@@ -94,54 +107,60 @@ const EmployeeSignature = () => {
         };
     }
 
-    async function addSignatures() {
+    const onCloseStaffModal = () => {
+        setOpenStaffModal(false);
+        clearStaffSignature();
+      };
+
+      async function addSignatures() {
 
         const existingPdfBytes = await fetch(file?.url).then((res) => res.arrayBuffer());
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
         const page = pdfDoc.getPage(pageNumber - 1);
         const { width, height } = page.getSize();
         const imageSize = { width: 250, height: 60 };
-
+    
         const signatureDataURLRight = sigCanvasRight.current.toDataURL();
         let signatureDataURLLeft = null;
-
+    
         if (singCanvasLeft.current) {
-            signatureDataURLLeft = singCanvasLeft.current.toDataURL();
+          signatureDataURLLeft = singCanvasLeft.current.toDataURL();
         } else {
-            console.error("Left-side signature canvas is not available.");
-            return; // !Exit the function if left-side canvas is not available.
+          console.error("Left-side signature canvas is not available.");
+          return; // Exit the function if left-side canvas is not available.
         }
-
+    
         const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
         const pngImageRight = await pdfDoc.embedPng(signatureDataURLRight);
-
+    
         // Add the left signature
         page.drawImage(pngImageLeft, {
-            x: width - imageSize.width - 270,
-            y: height - imageSize.height - 620,
-            width: imageSize.width,
-            height: imageSize.height,
-            opacity: 1,
+          x: width - imageSize.width - 270,
+          y: height - imageSize.height - 620,
+          width: imageSize.width,
+          height: imageSize.height,
+          opacity: 1,
         });
-
+    
         // Add the right signature if the right-side signature pad is shown
         page.drawImage(pngImageRight, {
-            x: width - imageSize.width - -20,
-            y: height - imageSize.height - 620,
-            width: imageSize.width,
-            height: imageSize.height,
-            opacity: 1,
+          x: width - imageSize.width - -20,
+          y: height - imageSize.height - 620,
+          width: imageSize.width,
+          height: imageSize.height,
+          opacity: 1,
         });
-
+    
         const modifiedPdfBytes = await pdfDoc.save();
         const modifiedPdfBlob = new Blob([modifiedPdfBytes], {
-            type: "application/pdf",
+          type: "application/pdf",
         });
         const modifiedPdfUrl = URL.createObjectURL(modifiedPdfBlob);
-
+    
         setOpenPDF(modifiedPdfUrl);
         setShowPDFModifiedBtn(true);
-    }
+      }
+    
 
     async function loadPdfContent(pdfUrl) {
         const existingPdfBytes = await fetch(pdfUrl).then((res) =>
@@ -235,7 +254,7 @@ const EmployeeSignature = () => {
             <div className="container text-center p-4">
 
                 <p className="text-bold mt-5">
-                    Easily add your docs and mark your signature
+                    Easily add your docs and mark your signature {identifier}
                 </p>
 
                 {
@@ -246,7 +265,7 @@ const EmployeeSignature = () => {
                             </div>
                         </div>
                     ) : (
-                        <div>
+                        <div> 
                             {file && (
                                 <div className="mt-5">
                                     <div className="row  mt-4 mb-4">
@@ -300,7 +319,7 @@ const EmployeeSignature = () => {
                                     <br />
 
 
-                                    <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenStaffSignatureModal(true)}>Staff Signature</button>
+                                    <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenStaffModal(true)}>Staff Signature</button>
                                     <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenPickupSignatureModal(true)}>Pickup Signature</button>
                                     <button className="btn btn-lg btn-outline-info mt-5" onClick={() => setOpenModal(true)}>I agree</button>
                                 </div>
@@ -324,6 +343,13 @@ const EmployeeSignature = () => {
                     setOpenModal={setOpenModal}
 
                 />
+
+<StaffSignatureModal
+        openStaffModal={openStaffModal}
+        clearStaffSignature={staffSignatureRef}
+        addSignatures={  addSignatures   }
+        onCloseStaffModal={onCloseStaffModal}
+      />
             </div>
         </>
     );

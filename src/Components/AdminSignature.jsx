@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import SignatureCanvas from "react-signature-canvas";
 import { Document, Page, pdfjs } from "react-pdf";
 import { PDFDocument, rgb } from "pdf-lib";
@@ -10,6 +10,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 
 toast.configure();
 const AdminSignature = () => {
+
+    const navigate = useNavigate();
     const fileInputRef = useRef(null);
     const inputRightRef = useRef(null);
 
@@ -53,6 +55,12 @@ const AdminSignature = () => {
                     console.log(result)
                     setIdentifier(result.user_identifier)
                     toast("Uploaded Successfully");
+
+
+
+                    setInterval(() => {
+                        navigate(`/EmployeeSignature?${result.user_identifier}`)
+                    }, 1500);
                 }
             })
             .catch(error => {
