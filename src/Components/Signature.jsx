@@ -34,9 +34,6 @@ const Signature = () => {
     fileInputRef.current.click();
   };
 
-
-  // wokring with the new GUI
-
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
@@ -49,7 +46,7 @@ const Signature = () => {
     }
   };
 
-  // Create a custom debounce function(adding dely in input)
+  // Create a custom debounce function(adding delay in input)
   function customDebounce(fn, delay) {
     let timeoutId;
     return function (...args) {
@@ -60,6 +57,9 @@ const Signature = () => {
     };
   }
 
+
+
+
   async function addSignatures() {
 
     const existingPdfBytes = await fetch(file?.url).then((res) => res.arrayBuffer());
@@ -67,20 +67,20 @@ const Signature = () => {
     const page = pdfDoc.getPage(pageNumber - 1);
     const { width, height } = page.getSize();
     const imageSize = { width: 250, height: 60 };
-  
+
     const signatureDataURLRight = sigCanvasRight.current.toDataURL();
     let signatureDataURLLeft = null;
-  
+
     if (singCanvasLeft.current) {
       signatureDataURLLeft = singCanvasLeft.current.toDataURL();
     } else {
       console.error("Left-side signature canvas is not available.");
       return; // Exit the function if left-side canvas is not available.
     }
-  
+
     const pngImageLeft = await pdfDoc.embedPng(signatureDataURLLeft);
     const pngImageRight = await pdfDoc.embedPng(signatureDataURLRight);
-  
+
     // Add the left signature
     page.drawImage(pngImageLeft, {
       x: width - imageSize.width - 270,
@@ -89,22 +89,22 @@ const Signature = () => {
       height: imageSize.height,
       opacity: 1,
     });
-  
+
     // Add the right signature if the right-side signature pad is shown
-      page.drawImage(pngImageRight, {
-        x: width - imageSize.width - -20,
-        y: height - imageSize.height - 620,
-        width: imageSize.width,
-        height: imageSize.height,
-        opacity: 1,
-      });
-  
+    page.drawImage(pngImageRight, {
+      x: width - imageSize.width - -20,
+      y: height - imageSize.height - 620,
+      width: imageSize.width,
+      height: imageSize.height,
+      opacity: 1,
+    });
+
     const modifiedPdfBytes = await pdfDoc.save();
     const modifiedPdfBlob = new Blob([modifiedPdfBytes], {
       type: "application/pdf",
     });
     const modifiedPdfUrl = URL.createObjectURL(modifiedPdfBlob);
-  
+
     setOpenPDF(modifiedPdfUrl);
     setShowPDFModifiedBtn(true);
   }
@@ -276,41 +276,41 @@ const Signature = () => {
               Next Page
             </button>
             <div className="d-flex justify-content-center">
-              
-                <div style={{ display: showRightSideSignaturePad ? 'none' : 'flex' }}>
-                  <SignatureCanvas
-                    ref={singCanvasLeft}
-                    penColor="black"
-                    canvasProps={{
-                      width: 350,
-                      height: 100,
-                      className: "signature-canvas border border-dark fw-bolder m-3",
-                    }}
-                  />
-                  <label htmlFor="" className="align-self-center">
-                    Pickup Signature
-                  </label>
-                </div>
-            {
-               showRightSideSignaturePad && (
-                <>
+
+              <div style={{ display: showRightSideSignaturePad ? 'none' : 'flex' }}>
                 <SignatureCanvas
-                ref={sigCanvasRight}
-                penColor="black"
-                canvasProps={{
-                  width: 350,
-                  height: 100,
-                  className:
-                    "signature-canvas border border-dark fw-bolder m-3",
-                }}
-              />
-              <label htmlFor="" className="align-self-center">
-                Staff Signature
-              </label>
-              </>
-               )  
-     
-            }  
+                  ref={singCanvasLeft}
+                  penColor="black"
+                  canvasProps={{
+                    width: 350,
+                    height: 100,
+                    className: "signature-canvas border border-dark fw-bolder m-3",
+                  }}
+                />
+                <label htmlFor="" className="align-self-center">
+                  Pickup Signature
+                </label>
+              </div>
+              {
+                showRightSideSignaturePad && (
+                  <>
+                    <SignatureCanvas
+                      ref={sigCanvasRight}
+                      penColor="black"
+                      canvasProps={{
+                        width: 350,
+                        height: 100,
+                        className:
+                          "signature-canvas border border-dark fw-bolder m-3",
+                      }}
+                    />
+                    <label htmlFor="" className="align-self-center">
+                      Staff Signature
+                    </label>
+                  </>
+                )
+
+              }
             </div>
 
             {showRightSideSignaturePad === true ? null : (
